@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.hbads.ryan</groupId>
     <artifactId>projecty-rid</artifactId>
     <version>dev</version>
+    <packaging>pom</packaging>
 
     <developers>
         <developer>
@@ -16,6 +17,9 @@
             <email>16634807103@qq.com</email>
         </developer>
     </developers>
+    <modules>
+        <module>ryan-facility</module>
+    </modules>
 
     <description>Outside pom file used to define version of dependencies.</description>
 
@@ -37,10 +41,12 @@
         <lombok.version>1.18.42</lombok.version>
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
         <caffeine.version>3.14.0</caffeine.version>
+        <tika.version>3.2.3</tika.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -128,6 +134,13 @@
                 <artifactId>caffeine</artifactId>
                 <version>${caffeine.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+
 
         </dependencies>
     </dependencyManagement>
