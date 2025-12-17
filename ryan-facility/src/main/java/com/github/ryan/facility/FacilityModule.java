@@ -16,7 +16,7 @@ import org.springframework.context.annotation.FilterType;
 public class FacilityModule {
     @PostConstruct
     public void moduleInit() {
-        LogUtil.info("init module:{},order:{}", FacilityModule.class.getSimpleName(), 0);
+        LogUtil.info("init module:{},order:{}", FacilityModule.class.getSimpleName(), 1);
     }
 
 }

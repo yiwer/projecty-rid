@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>cn.hbads.ryan</groupId>
-            <artifactId>projecty-rid</artifactId>
+            <artifactId>ryan-facility</artifactId>
             <version>${projecty-rid.version}</version>
         </dependency>
     </dependencies>
