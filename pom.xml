@@ -19,6 +19,7 @@
     </developers>
     <modules>
         <module>ryan-facility</module>
+        <module>ryan-version</module>
     </modules>
 
     <description>Outside pom file used to define version of dependencies.</description>
@@ -29,6 +30,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <projecty-rid.version>dev</projecty-rid.version>
 
         <spring-cloud.version>2025.1.0</spring-cloud.version>
         <spring-boot.version>4.0.0</spring-boot.version>
