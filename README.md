@@ -19,9 +19,17 @@ Projecty-Rid 是一个模块化的 Java 工具库项目，旨在为企业级应�
 ### Maven 依赖
 
 ```xml
+<!-- 基础工具模块 -->
 <dependency>
     <groupId>cn.hbads.ryan</groupId>
     <artifactId>ryan-facility</artifactId>
+    <version>dev</version>
+</dependency>
+
+<!-- 版本管理模块 -->
+<dependency>
+    <groupId>cn.hbads.ryan</groupId>
+    <artifactId>ryan-version</artifactId>
     <version>dev</version>
 </dependency>
 ```
@@ -31,6 +39,10 @@ Projecty-Rid 是一个模块化的 Java 工具库项目，旨在为企业级应�
 ### Ryan-Facility 模块
 
 核心工具模块，提供日常开发中常用的工具类和基础设施支持。
+
+### Ryan-Version 模块
+
+版本管理模块，提供基于日期的数据版本链管理功能，支持版本的新增、修改、删除、移动和懒加载。
 
 ## 🛠️ 核心功能
 
@@ -373,6 +385,409 @@ boolean matches = RegPatternUtil.matches(pattern, text);
 // 获取 Bean
 Result<MyService, WrappedError> result = 
     SpringContextHolder.getBean(MyService.class);
+```
+
+---
+
+### 10. 版本管理 (`Version Module`)
+
+基于日期的数据版本链管理系统，支持版本分裂、懒加载等高级特性。
+
+#### 10.1 解决的问题
+
+在企业应用中，许多业务数据需要支持**历史版本追溯**和**预约变更**功能，例如：
+
+| 场景 | 问题描述 |
+|------|----------|
+| 公交站点管理 | 站点名称从2025-06-01起变更，需要保留历史名称以供查询 |
+| 线路规划 | 线路将在未来某日调整，需要预先配置并在指定日期自动生效 |
+| 票价调整 | 票价分阶段调整，每个时间段对应不同的票价 |
+| 合同管理 | 合同条款在不同时期有不同版本，需要按生效日期查询 |
+
+**传统解决方案的痛点：**
+
+```
+❌ 方案一：每次变更新增一条记录
+   - 查询时需要复杂的日期过滤逻辑
+   - 无法直观看到数据的完整生命周期
+   - 数据一致性难以保证
+
+❌ 方案二：使用时间戳字段
+   - 历史版本查询性能差
+   - 版本之间的连续性难以维护
+   - 删除操作难以处理
+```
+
+**Version Module 的解决方案：**
+
+```
+✅ 版本链模型：将同一数据的所有版本组织成有序链表
+✅ 自动分裂：修改时自动处理版本边界
+✅ 懒加载：按需加载业务数据，减少内存占用
+✅ 变更追踪：自动标记变更的版本，简化持久化
+```
+
+#### 10.2 数据结构设计
+
+**版本链模型：**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        VersionChain                             │
+│  dataId: 1001, dataType: STOP                                   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌──────────┐    ┌──────────┐    ┌──────────┐                  │
+│   │ Version1 │───▶│ Version2 │───▶│ Version3 │                  │
+│   │ CREATE   │    │ MODIFY   │    │ DELETE   │                  │
+│   │ 01-01    │    │ 06-01    │    │ 12-01    │                  │
+│   │ ~ 05-31  │    │ ~ 11-30  │    │ ~ 12-01  │                  │
+│   └──────────┘    └──────────┘    └──────────┘                  │
+│                                                                 │
+│   versionDateTreeMap:    [01-01]→V1, [06-01]→V2, [12-01]→V3    │
+│   expirationDateTreeMap: [05-31]→V1, [11-30]→V2, [12-01]→V3    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**核心数据结构：**
+
+| 类 | 职责 |
+|----|------|
+| `BusinessData<D>` | 业务数据接口，定义数据标识、深拷贝、修改能力 |
+| `ReleaseDateVersionData` | 版本元数据（dataId, dataType, versionDate, expirationDate, type） |
+| `AbstractReleaseDateVersion<D,V>` | 版本抽象基类，包装业务数据和版本元数据 |
+| `ReleaseDateVersionChain<D,V>` | 版本链接口，定义版本操作规范 |
+| `AbstractReleaseDateVersionChain<D,V>` | 版本链实现，使用双 TreeMap 索引 |
+
+**版本类型状态机：**
+
+```
+                    ┌─────────────┐
+                    │  NO_CHANGE  │ (从数据库加载的未修改版本)
+                    └──────┬──────┘
+                           │ modify/delete
+              ┌────────────┴────────────┐
+              ▼                         ▼
+        ┌──────────┐              ┌──────────┐
+        │  MODIFY  │              │  DELETE  │
+        └────┬─────┘              └──────────┘
+             │ modify/delete            ▲
+             └──────────────────────────┘
+
+        ┌──────────┐
+        │  CREATE  │ (新创建的版本)
+        └────┬─────┘
+             │ delete (当天删除则清除整个链)
+             ▼
+        ┌──────────┐
+        │  DELETE  │
+        └──────────┘
+```
+
+#### 10.3 版本操作详解
+
+**1. 修改操作 (modify)**
+
+```java
+// 场景：站点在 2025-06-01 改名
+versionChain.modify(LocalDate.of(2025, 6, 1), new StopModifyModel("新站名"));
+```
+
+```
+情况A：修改日期 = 版本生效日期（合并）
+┌────────────────────────────┐       ┌────────────────────────────┐
+│ Version [01-01 ~ 12-31]    │  ──▶  │ Version [01-01 ~ 12-31]    │
+│ name = "旧站名"            │       │ name = "新站名"            │
+│ type = CREATE              │       │ type = CREATE (保持不变)   │
+└────────────────────────────┘       └────────────────────────────┘
+
+情况B：修改日期 在版本有效期内（分裂）
+┌────────────────────────────┐       ┌────────────┐ ┌──────────────┐
+│ Version [01-01 ~ 12-31]    │  ──▶  │ V1 [01-01  │ │ V2 [06-01    │
+│ name = "旧站名"            │       │  ~ 05-31]  │ │  ~ 12-31]    │
+│ type = CREATE              │       │ name=旧    │ │ name=新      │
+└────────────────────────────┘       │ type=CREATE│ │ type=MODIFY  │
+                                     └────────────┘ └──────────────┘
+```
+
+**2. 删除操作 (delete)**
+
+```java
+// 场景：站点在 2025-12-01 停用
+versionChain.delete(LocalDate.of(2025, 12, 1));
+```
+
+```
+情况A：删除创始版本（清除整个链）
+┌────────────────────────────┐
+│ Version [01-01 ~ 12-31]    │  ──▶  (空链，所有版本移至 removedVersions)
+└────────────────────────────┘
+
+情况B：删除非创始日期（分裂出删除版本）
+┌────────────────────────────┐       ┌────────────┐ ┌──────────────┐
+│ Version [01-01 ~ 12-31]    │  ──▶  │ V1 [01-01  │ │ V2 [12-01]   │
+│ type = CREATE              │       │  ~ 11-30]  │ │ type=DELETE  │
+└────────────────────────────┘       │ type=CREATE│ │ deleted=true │
+                                     └────────────┘ └──────────────┘
+```
+
+**3. 移动操作 (move)**
+
+```java
+// 场景：将版本生效日期从 06-01 调整为 07-01
+versionChain.move(version, LocalDate.of(2025, 7, 1));
+```
+
+```
+约束：移动不能跨越其他版本
+
+┌────────────┐ ┌────────────┐     ┌────────────┐ ┌────────────┐
+│ V1 [01-01  │ │ V2 [06-01  │ ──▶ │ V1 [01-01  │ │ V2 [07-01  │
+│  ~ 05-31]  │ │  ~ 12-31]  │     │  ~ 06-30]  │ │  ~ 12-31]  │
+└────────────┘ └────────────┘     └────────────┘ └────────────┘
+                  移动到 07-01       前版本过期日期自动调整
+```
+
+**4. 查询操作**
+
+```java
+// 查询某日期生效的版本
+Optional<V> version = chain.findEffectiveVersion(LocalDate.of(2025, 8, 15));
+
+// 查询与日期范围交叉的所有版本
+Collection<V> versions = chain.getVersionsByRangeCross(
+    LocalDate.of(2025, 3, 1),
+    LocalDate.of(2025, 9, 1)
+);
+
+// 获取创始日期和删除日期
+LocalDate genesisDate = chain.getGenesisDate();
+Optional<LocalDate> deletedDate = chain.getDeletedDate();
+```
+
+#### 10.4 懒加载机制
+
+**问题场景：**
+
+```
+一条线路有 100 个版本，但用户只查询 2025-08-01 的数据。
+
+❌ 全量加载：从数据库加载 100 个版本的业务数据 → 内存浪费、查询慢
+✅ 懒加载：只加载需要的版本 → 按需加载、高效
+```
+
+**Window-N 懒加载策略：**
+
+```
+查询 2025-08-01 生效的版本，窗口大小 N=2
+
+版本链： V1[01-01] ─ V2[04-01] ─ V3[06-01] ─ V4[08-01] ─ V5[10-01] ─ V6[12-01]
+                              ◄───────┬───────►
+                                   Window-2
+                              加载: V3, V4, V5
+
+策略优势：
+- 预加载相邻版本，减少后续查询的数据库访问
+- 批量加载，减少数据库往返次数
+- 只加载必要数据，控制内存占用
+```
+
+**实现懒加载器：**
+
+```java
+public class StopVersionLazyLoader 
+        extends WindowNStrategyReleaseDateVersionLazyLoader<StopData> {
+    
+    private final StopRepository repository;
+    
+    public StopVersionLazyLoader(
+            LazyLoadableReleaseDateVersionChain<StopData> chain,
+            StopRepository repository) {
+        super(chain, 2);  // 窗口大小 N=2，加载前后各2个版本
+        this.repository = repository;
+    }
+    
+    @Override
+    public void batchLoadVersions(Long dataId, Set<ReleaseDateVersionData> identities) {
+        // 1. 从数据库批量查询
+        Set<LocalDate> versionDates = identities.stream()
+            .map(ReleaseDateVersionData::getVersionDate)
+            .collect(Collectors.toSet());
+        List<StopEntity> entities = repository.findByDataIdAndVersionDates(dataId, versionDates);
+        
+        // 2. 转换为业务数据映射
+        Map<ReleaseDateVersionData, StopData> dataMap = entities.stream()
+            .collect(Collectors.toMap(
+                e -> findIdentity(identities, e.getVersionDate()),
+                StopData::fromEntity
+            ));
+        
+        // 3. 加载到版本链
+        versionChain.loadAggregatedDataToChain(dataMap);
+    }
+}
+```
+
+**懒加载版本链的使用：**
+
+```java
+// 创建懒加载版本链
+LazyLoadableReleaseDateVersionChain<StopData> chain = new StopVersionChain(dataId, dataType, versions);
+
+// 设置懒加载器
+StopVersionLazyLoader loader = new StopVersionLazyLoader(chain, repository);
+versions.forEach(v -> v.setVersionLoader(loader));
+
+// 访问业务数据时自动触发加载
+StopData data = chain.findEffectiveVersion(LocalDate.now())
+    .map(LazyLoadableReleaseDateVersion::getBusinessData)  // 触发懒加载
+    .orElse(null);
+```
+
+#### 10.5 持久化集成
+
+版本链提供变更追踪，简化持久化逻辑：
+
+```java
+public void saveVersionChain(ReleaseDateVersionChain<StopData, ?> chain) {
+    // 1. 保存/更新变更的版本
+    Collection<? extends AbstractReleaseDateVersion<StopData, ?>> changedVersions = 
+        chain.getChangedVersions();
+    for (var version : changedVersions) {
+        if (version.getReleaseVersionType() == ReleaseVersionType.CREATE) {
+            repository.insert(toEntity(version));
+        } else {
+            repository.update(toEntity(version));
+        }
+    }
+    
+    // 2. 删除已移除的版本
+    List<AloneReleaseDateVersion<StopData>> removedVersions = chain.getRemovedVersions();
+    for (var removed : removedVersions) {
+        repository.deleteByDataIdAndVersionDate(
+            removed.getDataId(),
+            removed.getVersionDate()
+        );
+    }
+}
+```
+
+#### 10.6 Spring 事件集成
+
+```java
+// 定义版本链事件
+public class StopVersionChainEvent 
+        extends ReleaseDateVersionChainEvent<StopData, LazyLoadableReleaseDateVersion<StopData>, StopVersionChain> {
+    
+    public StopVersionChainEvent(StopVersionChain chain) {
+        super(chain);
+    }
+}
+
+// 发布事件
+@Service
+public class StopVersionService {
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+    
+    public void modifyStop(Long dataId, LocalDate modifyDate, StopModifyModel model) {
+        StopVersionChain chain = loadChain(dataId);
+        chain.modify(modifyDate, model);
+        saveVersionChain(chain);
+        
+        // 发布变更事件
+        eventPublisher.publishEvent(new StopVersionChainEvent(chain));
+    }
+}
+
+// 监听事件
+@Component
+public class StopVersionEventListener {
+    @EventListener
+    public void onVersionChainChanged(StopVersionChainEvent event) {
+        StopVersionChain chain = event.getVersionChain();
+        log.info("站点 {} 版本链变更", chain.getDataId());
+        // 触发缓存刷新、通知等后续处理
+    }
+}
+```
+
+#### 10.7 完整使用示例
+
+```java
+// 1. 定义业务数据
+@Data
+public class StopData implements BusinessData<StopData> {
+    private Long stopId;
+    private String stopName;
+    private String address;
+    private Double longitude;
+    private Double latitude;
+    
+    @Override
+    public Long getDataId() { return stopId; }
+    
+    @Override
+    public Integer getDataType() { return DataType.STOP.getCode(); }
+    
+    @Override
+    public StopData copy() {
+        StopData copy = new StopData();
+        BeanUtils.copyProperties(this, copy);
+        return copy;
+    }
+    
+    @Override
+    public void modifyData(BusinessDataModifyInterface model) {
+        if (model instanceof StopModifyModel m) {
+            Optional.ofNullable(m.getStopName()).ifPresent(v -> this.stopName = v);
+            Optional.ofNullable(m.getAddress()).ifPresent(v -> this.address = v);
+            Optional.ofNullable(m.getLongitude()).ifPresent(v -> this.longitude = v);
+            Optional.ofNullable(m.getLatitude()).ifPresent(v -> this.latitude = v);
+        }
+    }
+}
+
+// 2. 定义修改模型
+@Data
+public class StopModifyModel implements BusinessDataModifyInterface {
+    private String stopName;
+    private String address;
+    private Double longitude;
+    private Double latitude;
+}
+
+// 3. 使用版本链
+@Service
+@RequiredArgsConstructor
+public class StopVersionService {
+    private final StopVersionChainFactory factory;
+    private final StopRepository repository;
+    
+    // 创建站点（创建版本链）
+    public void createStop(StopCreateModel model) {
+        StopVersionChain chain = factory.createDataVersionChain(model);
+        saveVersionChain(chain);
+    }
+    
+    // 修改站点（版本分裂）
+    public Result<Void, WrappedError> modifyStop(Long stopId, LocalDate effectiveDate, StopModifyModel model) {
+        StopVersionChain chain = loadChain(stopId);
+        Result<Void, WrappedError> result = chain.modify(effectiveDate, model);
+        if (result.isOk()) {
+            saveVersionChain(chain);
+        }
+        return result;
+    }
+    
+    // 查询某日期的站点数据
+    public Optional<StopData> getStopAt(Long stopId, LocalDate queryDate) {
+        StopVersionChain chain = loadChain(stopId);
+        return chain.findEffectiveVersion(queryDate)
+            .filter(v -> !v.isDeleted())
+            .map(AbstractReleaseDateVersion::getBusinessData);
+    }
+}
 ```
 
 ---
