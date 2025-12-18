@@ -490,6 +490,28 @@ public class CommonUtil {
         return data != null ? data : defaultValue;
     }
 
+
+    /**
+     * 将可变参数数组转换为可修改的 ArrayList
+     * <p>
+     * 与 {@link Arrays#asList(Object[])} 不同，该方法返回的是一个真正的 ArrayList，
+     * 支持 add、remove 等修改操作。
+     * </p>
+     *
+     * @param arrays 可变参数数组（可为 null）
+     * @param <T>    元素类型
+     *
+     * @return 包含所有元素的 ArrayList；如果输入为 null 或空数组，返回空的 ArrayList
+     */
+    @SafeVarargs
+    public static <T> List<T> asList(@Nullable T... arrays) {
+        if (arrays == null || arrays.length == 0) {
+            return new ArrayList<>();
+        } else {
+            return new ArrayList<>(Arrays.asList(arrays));
+        }
+    }
+
     // ================== Business Logic ==================
 
     /**

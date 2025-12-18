@@ -20,6 +20,7 @@
     <modules>
         <module>ryan-facility</module>
         <module>ryan-version</module>
+        <module>ryan-easyexcel-advance</module>
     </modules>
 
     <description>Outside pom file used to define version of dependencies.</description>
@@ -44,6 +45,7 @@
         <apache-commons-lang3.version>3.20.0</apache-commons-lang3.version>
         <caffeine.version>3.14.0</caffeine.version>
         <tika.version>3.2.3</tika.version>
+        <poi.version>5.5.1</poi.version>
     </properties>
 
     <dependencyManagement>
@@ -87,6 +89,18 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>easyexcel</artifactId>
                 <version>${alibaba.easyexcel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
             </dependency>
 
             <dependency>
