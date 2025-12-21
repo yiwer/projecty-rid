@@ -1,0 +1,29 @@
+module ryan.facility {
+    exports com.github.ryan.facility.date;
+    exports com.github.ryan.facility.error;
+    exports com.github.ryan.facility.log;
+    exports com.github.ryan.facility.result;
+    exports com.github.ryan.facility;
+    requires ch.qos.logback.classic;
+    requires cn.hutool.core;
+    requires com.fasterxml.jackson.annotation;
+    requires com.fasterxml.jackson.core;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.datatype.jdk8;
+    requires com.fasterxml.jackson.datatype.jsr310;
+    requires com.fasterxml.jackson.module.paramnames;
+    requires jakarta.annotation;
+    requires jakarta.validation;
+    requires java.net.http;
+    requires static lombok;
+    requires org.apache.commons.lang3;
+    requires org.apache.tika.core;
+    requires org.apache.tomcat.embed.core;
+    requires org.jspecify;
+    requires org.slf4j;
+    requires spring.beans;
+    requires spring.boot.autoconfigure;
+    requires spring.context;
+    requires spring.core;
+    requires spring.web;
+}

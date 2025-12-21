@@ -6,7 +6,7 @@
 
     <groupId>cn.hbads.ryan</groupId>
     <artifactId>projecty-rid</artifactId>
-    <version>dev</version>
+    <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <developers>
@@ -21,6 +21,7 @@
         <module>ryan-facility</module>
         <module>ryan-version</module>
         <module>ryan-easyexcel-advance</module>
+        <module>ryan-change-monitor</module>
     </modules>
 
     <description>Outside pom file used to define version of dependencies.</description>
@@ -31,7 +32,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <projecty-rid.version>dev</projecty-rid.version>
+        <projecty-rid.version>0.0.1-SNAPSHOT</projecty-rid.version>
+
 
         <spring-cloud.version>2025.1.0</spring-cloud.version>
         <spring-boot.version>4.0.0</spring-boot.version>
