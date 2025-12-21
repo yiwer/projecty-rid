@@ -6,7 +6,7 @@
     <parent>
         <groupId>cn.hbads.ryan</groupId>
         <artifactId>projecty-rid</artifactId>
-        <version>dev</version>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>ryan-version</artifactId>
