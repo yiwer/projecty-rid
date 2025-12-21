@@ -4,6 +4,8 @@ module ryan.facility {
     exports com.github.ryan.facility.log;
     exports com.github.ryan.facility.result;
     exports com.github.ryan.facility;
+    exports com.github.ryan.facility.copy;
+    exports com.github.ryan.facility.common;
     requires ch.qos.logback.classic;
     requires cn.hutool.core;
     requires com.fasterxml.jackson.annotation;
@@ -26,4 +28,8 @@ module ryan.facility {
     requires spring.context;
     requires spring.core;
     requires spring.web;
+    requires org.apache.pdfbox;
+    requires org.apache.poi.scratchpad;
+    requires org.apache.poi.ooxml;
+    requires ofdrw.reader;
 }
