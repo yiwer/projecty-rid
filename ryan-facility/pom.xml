@@ -118,6 +118,30 @@
             <artifactId>tika-core</artifactId>
         </dependency>
 
+        <!-- 15. POI for Word document processing -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- 16. PDFBox for PDF document processing -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+        </dependency>
+
+        <!-- 17. OFDRW for OFD document processing -->
+        <dependency>
+            <groupId>org.ofdrw</groupId>
+            <artifactId>ofdrw-reader</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -48,6 +48,8 @@
         <caffeine.version>3.14.0</caffeine.version>
         <tika.version>3.2.3</tika.version>
         <poi.version>5.5.1</poi.version>
+        <pdfbox.version>3.0.5</pdfbox.version>
+        <ofdrw.version>2.3.7</ofdrw.version>
     </properties>
 
     <dependencyManagement>
@@ -159,6 +161,17 @@
                 <version>${tika.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ofdrw</groupId>
+                <artifactId>ofdrw-reader</artifactId>
+                <version>${ofdrw.version}</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>

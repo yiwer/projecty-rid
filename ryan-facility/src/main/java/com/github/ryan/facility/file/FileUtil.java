@@ -7,10 +7,22 @@ import com.github.ryan.facility.pattern.RegPatternUtil;
 import com.github.ryan.facility.result.Result;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeType;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
+import org.ofdrw.reader.OFDReader;
+import org.ofdrw.reader.ContentExtractor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
@@ -129,11 +141,39 @@ public final class FileUtil {
             "exe", "bat", "cmd", "sh", "ps1", "vbs", "js",
             "jar", "msi", "dll", "com", "scr", "pif"
     );
+    /**
+     * Word 文档 MIME 类型常量
+     */
+    private static final String MIME_TYPE_DOC = "application/msword";
+
+    // ==================== 1. 文件类型检测（Tika） ====================
+    private static final String MIME_TYPE_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    /**
+     * OLE2 复合文档通用 MIME 类型（Tika 无法精确区分 .doc/.xls/.ppt 时返回此类型）
+     */
+    private static final String MIME_TYPE_OLE2 = "application/x-tika-msoffice";
+    /**
+     * Excel 文档 MIME 类型常量
+     */
+    private static final String MIME_TYPE_XLS = "application/vnd.ms-excel";
+    private static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    /**
+     * PDF 文档 MIME 类型常量
+     */
+    private static final String MIME_TYPE_PDF = "application/pdf";
+    /**
+     * OFD 文档 MIME 类型常量
+     */
+    private static final String MIME_TYPE_OFD = "application/ofd";
+    /**
+     * OFD 文档备用 MIME 类型（ZIP 格式）
+     */
+    private static final String MIME_TYPE_ZIP = "application/zip";
 
     private FileUtil() {
     }
 
-    // ==================== 1. 文件类型检测（Tika） ====================
+    // ==================== 2. 文件类型判断 ====================
 
     /**
      * <b>检测文件的 MIME 类型</b>
@@ -224,8 +264,6 @@ public final class FileUtil {
         }
     }
 
-    // ==================== 2. 文件类型判断 ====================
-
     /**
      * <b>判断文件是否为图片</b>
      * <p>基于文件魔数检测，而非扩展名。</p>
@@ -244,6 +282,8 @@ public final class FileUtil {
                 .map(IMAGE_MIME_TYPES::contains)
                 .orElse(false);
     }
+
+    // ==================== 3. MultipartFile 上传与存储 ====================
 
     /**
      * <b>判断文件是否为文档</b>
@@ -295,7 +335,7 @@ public final class FileUtil {
         return ext != null && DANGEROUS_EXTENSIONS.contains(ext.toLowerCase());
     }
 
-    // ==================== 3. MultipartFile 上传与存储 ====================
+    // ==================== 4. HTTP 下载与预览 ====================
 
     /**
      * <b>保存上传文件到指定目录</b>
@@ -410,6 +450,8 @@ public final class FileUtil {
         return saveFile(file, destPath);
     }
 
+    // ==================== 5. 文件名与路径工具 ====================
+
     /**
      * <b>MultipartFile 转 Java IO File</b>
      * <p>会产生临时文件，使用完建议删除。</p>
@@ -435,8 +477,6 @@ public final class FileUtil {
                     FacilityErrorType.FILE_WRITE_ERROR, e, new Object[]{fileName}));
         }
     }
-
-    // ==================== 4. HTTP 下载与预览 ====================
 
     /**
      * <b>文件下载（Attachment 模式）</b>
@@ -535,8 +575,6 @@ public final class FileUtil {
         }
     }
 
-    // ==================== 5. 文件名与路径工具 ====================
-
     /**
      * <b>清洗文件名</b>
      * <p>移除路径穿越字符、特殊字符，确保文件名安全。</p>
@@ -570,6 +608,8 @@ public final class FileUtil {
 
         return Result.ok(cleaned);
     }
+
+    // ==================== 6. 文件哈希计算 ====================
 
     /**
      * <b>获取文件扩展名</b>
@@ -620,14 +660,14 @@ public final class FileUtil {
         return StringUtils.hasText(ext) ? timestamp + "." + ext : timestamp;
     }
 
-    // ==================== 6. 文件哈希计算 ====================
-
     /**
      * <b>计算文件 MD5 哈希</b>
      */
     public static Result<String, WrappedError> md5(File file) {
         return hash(file, "MD5");
     }
+
+    // ==================== 7. 文件操作 ====================
 
     /**
      * <b>计算文件 SHA-256 哈希</b>
@@ -692,7 +732,7 @@ public final class FileUtil {
         return sb.toString();
     }
 
-    // ==================== 7. 文件操作 ====================
+    // ==================== 8. 文件读写 ====================
 
     /**
      * <b>复制文件</b>
@@ -788,7 +828,7 @@ public final class FileUtil {
         }
     }
 
-    // ==================== 8. 文件读写 ====================
+    // ==================== 9. 文件查询 ====================
 
     /**
      * <b>读取文件为字节数组</b>
@@ -862,8 +902,6 @@ public final class FileUtil {
         }
     }
 
-    // ==================== 9. 文件查询 ====================
-
     /**
      * <b>获取文件大小</b>
      */
@@ -920,6 +958,8 @@ public final class FileUtil {
         }
     }
 
+    // ==================== 10. 压缩功能 ====================
+
     /**
      * <b>递归列出目录下的所有文件</b>
      */
@@ -947,6 +987,8 @@ public final class FileUtil {
         );
     }
 
+    // ==================== 11. 安全校验 ====================
+
     public static List<File> searchFilesByPattern(Path directory, String regex) {
         return searchFiles(directory, file -> RegPatternUtil.matches(regex, file.getName()));
     }
@@ -954,6 +996,8 @@ public final class FileUtil {
     public static List<File> searchFilesByFileType(Path directory, String type) {
         return searchFiles(directory, file -> detectMimeType(file).isOkAnd(type::equals));
     }
+
+    // ==================== 12. 工具方法 ====================
 
     public static List<File> searchFiles(Path directory, Predicate<File> predicate) {
         if (directory == null || !directory.toFile().exists()) {
@@ -964,8 +1008,6 @@ public final class FileUtil {
         }
         return List.of(Objects.requireNonNull(directory.toFile().listFiles((dir, name) -> dir.isFile() && predicate.test(dir))));
     }
-
-    // ==================== 10. 压缩功能 ====================
 
     /**
      * <b>压缩文件列表为 ZIP</b>
@@ -1001,6 +1043,8 @@ public final class FileUtil {
         }
     }
 
+    // ==================== 13. Word 文档文本提取 ====================
+
     /**
      * <b>压缩目录为 ZIP</b>
      */
@@ -1034,8 +1078,6 @@ public final class FileUtil {
         }
     }
 
-    // ==================== 11. 安全校验 ====================
-
     /**
      * <b>校验文件扩展名是否在白名单中</b>
      */
@@ -1059,8 +1101,6 @@ public final class FileUtil {
         return allowedExtensions.stream()
                 .anyMatch(allowed -> allowed.equalsIgnoreCase(ext));
     }
-
-    // ==================== 12. 工具方法 ====================
 
     /**
      * <b>格式化文件大小</b>
@@ -1111,5 +1151,280 @@ public final class FileUtil {
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
+    }
+
+
+    // ==================== 13. 文档文本提取（Word/Excel/PDF/OFD） ====================
+
+    /**
+     * <b>从输入流中提取文档文本</b>
+     * <p>基于魔数（magic number）检测文档类型，而非文件名后缀。</p>
+     * <p>支持的格式：.doc, .docx, .xls, .xlsx, .pdf, .ofd</p>
+     *
+     * @param inputStream 文档输入流
+     *
+     * @return 提取的文本内容，或错误信息
+     */
+    public static Result<String, WrappedError> extractTextFromStream(InputStream inputStream) {
+        return extractTextFromStream(inputStream, null);
+    }
+
+    /**
+     * <b>从输入流中提取文档文本</b>
+     * <p>基于魔数（magic number）检测文档类型，而非文件名后缀。</p>
+     * <p>支持的格式：.doc, .docx, .xls, .xlsx, .pdf, .ofd</p>
+     *
+     * @param inputStream 文档输入流
+     * @param fileName    文件名（用于 OFD 等无法通过魔数区分的格式）
+     *
+     * @return 提取的文本内容，或错误信息
+     */
+    public static Result<String, WrappedError> extractTextFromStream(InputStream inputStream, String fileName) {
+        if (inputStream == null) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR));
+        }
+
+        // 包装为 BufferedInputStream 以支持 mark/reset
+        BufferedInputStream bufferedInputStream = inputStream instanceof BufferedInputStream
+                ? (BufferedInputStream) inputStream
+                : new BufferedInputStream(inputStream);
+
+        // 使用魔数检测文件类型
+        Result<String, WrappedError> mimeResult = detectMimeType(bufferedInputStream);
+        if (mimeResult.isErr()) {
+            return Result.err(mimeResult.getErr());
+        }
+
+        String mimeType = mimeResult.get();
+
+        // Word 文档
+        if (MIME_TYPE_DOCX.equals(mimeType)) {
+            return extractTextFromDocxStream(bufferedInputStream);
+        } else if (MIME_TYPE_DOC.equals(mimeType)) {
+            return extractTextFromDocStream(bufferedInputStream);
+        }
+        // Excel 文档
+        else if (MIME_TYPE_XLSX.equals(mimeType)) {
+            return extractTextFromXlsxStream(bufferedInputStream);
+        } else if (MIME_TYPE_XLS.equals(mimeType)) {
+            return extractTextFromXlsStream(bufferedInputStream);
+        }
+        // PDF 文档
+        else if (MIME_TYPE_PDF.equals(mimeType)) {
+            return extractTextFromPdfStream(bufferedInputStream);
+        }
+        // OFD 文档（通过 MIME 类型或文件后缀判断）
+        else if (MIME_TYPE_OFD.equals(mimeType) || isOfdFile(fileName)) {
+            return extractTextFromOfdStream(bufferedInputStream);
+        }
+        // ZIP 格式可能是 OFD（OFD 本质是 ZIP 压缩包）
+        else if (MIME_TYPE_ZIP.equals(mimeType) && isOfdFile(fileName)) {
+            return extractTextFromOfdStream(bufferedInputStream);
+        }
+        // OLE2 通用类型，尝试依次作为 doc/xls 解析
+        else if (MIME_TYPE_OLE2.equals(mimeType)) {
+            Result<String, WrappedError> docResult = extractTextFromDocStream(bufferedInputStream);
+            if (docResult.isOk()) {
+                return docResult;
+            }
+            // doc 解析失败，尝试 xls
+            return extractTextFromXlsStream(bufferedInputStream);
+        }
+        // 不支持的类型
+        else {
+            return Result.err(WrappedError.of(
+                    FacilityErrorType.FILE_TYPE_NOT_SUPPORTED, null, new Object[]{mimeType}));
+        }
+    }
+
+    /**
+     * <b>判断是否为 OFD 文件</b>
+     */
+    private static boolean isOfdFile(String fileName) {
+        if (!StringUtils.hasText(fileName)) {
+            return false;
+        }
+        return fileName.toLowerCase().endsWith(".ofd");
+    }
+
+    /**
+     * <b>从输入流中提取 Word 文档文本</b>
+     * <p>基于魔数（magic number）检测文档类型，而非文件名后缀。</p>
+     *
+     * @param inputStream 文档输入流
+     *
+     * @return 提取的文本内容，或错误信息
+     *
+     * @deprecated 使用 {@link #extractTextFromStream(InputStream)} 替代
+     */
+    @Deprecated
+    public static Result<String, WrappedError> extractTextFromWord(InputStream inputStream) {
+        return extractTextFromStream(inputStream);
+    }
+
+    /**
+     * <b>从输入流中提取 Excel 文档文本</b>
+     * <p>基于魔数（magic number）检测文档类型，而非文件名后缀。</p>
+     *
+     * @param inputStream 文档输入流
+     *
+     * @return 提取的文本内容，或错误信息
+     *
+     * @deprecated 使用 {@link #extractTextFromStream(InputStream)} 替代
+     */
+    @Deprecated
+    public static Result<String, WrappedError> extractTextFromExcel(InputStream inputStream) {
+        return extractTextFromStream(inputStream);
+    }
+
+    /**
+     * <b>从 PDF 输入流提取文本</b>
+     */
+    private static Result<String, WrappedError> extractTextFromPdfStream(InputStream inputStream) {
+        try {
+            byte[] bytes = inputStream.readAllBytes();
+            try (PDDocument document = Loader.loadPDF(bytes)) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                return Result.ok(stripper.getText(document));
+            }
+        } catch (IOException e) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR, e));
+        }
+    }
+
+    /**
+     * <b>从 OFD 输入流提取文本</b>
+     */
+    private static Result<String, WrappedError> extractTextFromOfdStream(InputStream inputStream) {
+        Path tempFile = null;
+        try {
+            // OFDReader 需要文件路径，先写入临时文件
+            tempFile = Files.createTempFile("ofd_extract_", ".ofd");
+            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+            try (OFDReader reader = new OFDReader(tempFile)) {
+                ContentExtractor extractor = new ContentExtractor(reader);
+                // 提取所有页面的文本
+                List<String> allTexts = extractor.extractAll();
+                if (allTexts == null || allTexts.isEmpty()) {
+                    return Result.ok("");
+                }
+                return Result.ok(String.join("\n", allTexts));
+            }
+        } catch (IOException e) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR, e));
+        } finally {
+            // 清理临时文件
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException ignored) {
+                    // 忽略删除失败
+                }
+            }
+        }
+    }
+
+    /**
+     * <b>从 .docx 输入流提取文本</b>
+     */
+    private static Result<String, WrappedError> extractTextFromDocxStream(InputStream inputStream) {
+        try (XWPFDocument document = new XWPFDocument(inputStream);
+             XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
+            return Result.ok(extractor.getText());
+        } catch (IOException e) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR, e));
+        }
+    }
+
+    /**
+     * <b>从 .doc 输入流提取文本</b>
+     */
+    private static Result<String, WrappedError> extractTextFromDocStream(InputStream inputStream) {
+        try (HWPFDocument document = new HWPFDocument(inputStream);
+             WordExtractor extractor = new WordExtractor(document)) {
+            return Result.ok(extractor.getText());
+        } catch (IOException e) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR, e));
+        }
+    }
+
+
+    /**
+     * <b>从 .xlsx 输入流提取文本</b>
+     */
+    private static Result<String, WrappedError> extractTextFromXlsxStream(InputStream inputStream) {
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            return Result.ok(extractTextFromWorkbook(workbook));
+        } catch (IOException e) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR, e));
+        }
+    }
+
+    /**
+     * <b>从 .xls 输入流提取文本</b>
+     */
+    private static Result<String, WrappedError> extractTextFromXlsStream(InputStream inputStream) {
+        try (Workbook workbook = new HSSFWorkbook(inputStream)) {
+            return Result.ok(extractTextFromWorkbook(workbook));
+        } catch (IOException e) {
+            return Result.err(WrappedError.of(FacilityErrorType.FILE_READ_ERROR, e));
+        }
+    }
+
+    /**
+     * <b>从 Workbook 中提取所有文本内容</b>
+     */
+    private static String extractTextFromWorkbook(Workbook workbook) {
+        StringBuilder sb = new StringBuilder();
+        DataFormatter formatter = new DataFormatter();
+
+        for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
+            Sheet sheet = workbook.getSheetAt(sheetIndex);
+            if (!sb.isEmpty()) {
+                sb.append("\n");
+            }
+            sb.append("[Sheet: ").append(sheet.getSheetName()).append("]\n");
+
+            for (Row row : sheet) {
+                boolean firstCell = true;
+                for (Cell cell : row) {
+                    if (!firstCell) {
+                        sb.append("\t");
+                    }
+                    sb.append(getCellTextValue(cell, formatter));
+                    firstCell = false;
+                }
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * <b>获取单元格的文本值</b>
+     */
+    private static String getCellTextValue(Cell cell, DataFormatter formatter) {
+        if (cell == null) {
+            return "";
+        }
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> {
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    yield formatter.formatCellValue(cell);
+                }
+                yield formatter.formatCellValue(cell);
+            }
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case FORMULA -> {
+                try {
+                    yield formatter.formatCellValue(cell);
+                } catch (Exception e) {
+                    yield cell.getCellFormula();
+                }
+            }
+            case BLANK, ERROR, _NONE -> "";
+        };
     }
 }
