@@ -3,7 +3,7 @@ package com.github.ryan.version.release_date.lazy_load;
 import com.github.ryan.facility.common.CommonUtil;
 import com.github.ryan.version.core.BusinessData;
 import com.github.ryan.version.core.VersionLazyLoader;
-import com.github.ryan.version.release_date.ReleaseDateVersionData;
+import com.github.ryan.version.release_date.ReleaseDateVersionMetaData;
 import com.github.ryan.version.release_date.version.AbstractReleaseDateVersion;
 
 import java.util.List;
@@ -98,9 +98,9 @@ public abstract class WindowNStrategyReleaseDateVersionLazyLoader<D extends Busi
     public D load(Long dataId, Integer dataType, LazyLoadableReleaseDateVersion<D> lazyLoadVersion) {
         final List<LazyLoadableReleaseDateVersion<D>> windowVersions = versionChain.findVersionsInWindowN(lazyLoadVersion, n);
         if (CommonUtil.isNotEmpty(windowVersions)) {
-            final Set<ReleaseDateVersionData> releaseDateVersionIdentities = windowVersions.stream()
+            final Set<ReleaseDateVersionMetaData> releaseDateVersionIdentities = windowVersions.stream()
                     .filter(v -> !v.isLoaded())
-                    .map(AbstractReleaseDateVersion::getReleaseDateVersionData)
+                    .map(AbstractReleaseDateVersion::getReleaseDateVersionMetaData)
                     .collect(Collectors.toSet());
             if (CommonUtil.isNotEmpty(releaseDateVersionIdentities)) {
                 batchLoadVersions(dataId, releaseDateVersionIdentities);
@@ -121,5 +121,5 @@ public abstract class WindowNStrategyReleaseDateVersionLazyLoader<D extends Busi
      * @param dataId                       数据ID
      * @param releaseDateVersionIdentities 需要加载的版本身份标识集合
      */
-    public abstract void batchLoadVersions(Long dataId, Set<ReleaseDateVersionData> releaseDateVersionIdentities);
+    public abstract void batchLoadVersions(Long dataId, Set<ReleaseDateVersionMetaData> releaseDateVersionIdentities);
 }

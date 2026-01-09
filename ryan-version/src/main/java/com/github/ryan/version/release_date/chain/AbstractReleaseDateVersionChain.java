@@ -85,9 +85,9 @@ public abstract class AbstractReleaseDateVersionChain<D extends BusinessData<D>,
     /**
      * 构造日期版本链
      *
-     * @param dataId               数据 ID
-     * @param dataType             数据类型
-     * @param releaseDateVersions  初始版本列表
+     * @param dataId              数据 ID
+     * @param dataType            数据类型
+     * @param releaseDateVersions 初始版本列表
      */
     protected AbstractReleaseDateVersionChain(Long dataId, Integer dataType, List<V> releaseDateVersions) {
         this.dataId = dataId;
@@ -120,7 +120,7 @@ public abstract class AbstractReleaseDateVersionChain<D extends BusinessData<D>,
      */
     protected void removeVersionInChain(V version) {
         version.setRemoved(true);
-        this.removeVersions.add(new AloneReleaseDateVersion<>(version.getReleaseDateVersionData(), version.getBusinessData()));
+        this.removeVersions.add(new AloneReleaseDateVersion<>(version.getReleaseDateVersionMetaData(), version.getBusinessData()));
         this.versionDateTreeMap.remove(version.getVersionDate());
         this.expirationDateTreeMap.remove(version.getExpirationDate());
     }
@@ -188,6 +188,7 @@ public abstract class AbstractReleaseDateVersionChain<D extends BusinessData<D>,
      *
      * @param effectiveVersion 要分裂的版本
      * @param splitDate        分裂日期
+     *
      * @return 分裂后的新版本
      */
     protected V splitVersion(V effectiveVersion, LocalDate splitDate) {
@@ -218,7 +219,7 @@ public abstract class AbstractReleaseDateVersionChain<D extends BusinessData<D>,
     protected void clearAllElements() {
         this.versionDateTreeMap.forEach((date, version) -> {
             version.setRemoved(true);
-            this.removeVersions.add(new AloneReleaseDateVersion<>(version.getReleaseDateVersionData(), version.getBusinessData()));
+            this.removeVersions.add(new AloneReleaseDateVersion<>(version.getReleaseDateVersionMetaData(), version.getBusinessData()));
         });
         this.versionDateTreeMap.clear();
         this.expirationDateTreeMap.clear();

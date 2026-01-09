@@ -2,7 +2,7 @@ package com.github.ryan.version.release_date.version;
 
 import com.github.ryan.version.core.BusinessData;
 import com.github.ryan.version.core.BusinessDataModifyInterface;
-import com.github.ryan.version.release_date.ReleaseDateVersionData;
+import com.github.ryan.version.release_date.ReleaseDateVersionMetaData;
 import com.github.ryan.version.release_date.ReleaseVersionType;
 import jakarta.annotation.Nonnull;
 import lombok.Getter;
@@ -44,7 +44,7 @@ import java.util.Objects;
  * @param <V> 版本类型（自引用泛型，用于返回正确的子类型）
  *
  * @author yvvb
- * @see ReleaseDateVersionData
+ * @see ReleaseDateVersionMetaData
  * @see ReleaseVersionType
  * @since 11/5/2025
  */
@@ -56,7 +56,7 @@ public abstract class AbstractReleaseDateVersion<D extends BusinessData<D>, V ex
     /**
      * 版本元数据，包含数据ID、类型、日期等信息
      */
-    protected final ReleaseDateVersionData releaseDateVersionData;
+    protected final ReleaseDateVersionMetaData releaseDateVersionMetaData;
 
     /**
      * 标记版本是否已从链中移除
@@ -71,13 +71,13 @@ public abstract class AbstractReleaseDateVersion<D extends BusinessData<D>, V ex
     /**
      * 构造函数
      *
-     * @param releaseDateVersionData 版本元数据，不允许为 null
+     * @param releaseDateVersionMetaData 版本元数据，不允许为 null
      *
      * @throws NullPointerException 如果 releaseDateVersionData 为 null
      */
-    protected AbstractReleaseDateVersion(@Nonnull ReleaseDateVersionData releaseDateVersionData) {
-        Objects.requireNonNull(releaseDateVersionData);
-        this.releaseDateVersionData = releaseDateVersionData;
+    protected AbstractReleaseDateVersion(@Nonnull ReleaseDateVersionMetaData releaseDateVersionMetaData) {
+        Objects.requireNonNull(releaseDateVersionMetaData);
+        this.releaseDateVersionMetaData = releaseDateVersionMetaData;
     }
 
     /**
@@ -125,84 +125,84 @@ public abstract class AbstractReleaseDateVersion<D extends BusinessData<D>, V ex
      */
 
     public Long getDataId() {
-        return releaseDateVersionData.getDataId();
+        return releaseDateVersionMetaData.getDataId();
     }
 
     /**
      * 获取数据类型
      */
     public Integer getDataType() {
-        return releaseDateVersionData.getDataType();
+        return releaseDateVersionMetaData.getDataType();
     }
 
     /**
      * 获取版本类型（创建/修改/删除）
      */
     public ReleaseVersionType getReleaseVersionType() {
-        return releaseDateVersionData.getReleaseVersionType();
+        return releaseDateVersionMetaData.getReleaseVersionType();
     }
 
     /**
      * 设置版本类型
      */
     public void setReleaseVersionType(ReleaseVersionType releaseVersionType) {
-        releaseDateVersionData.setReleaseVersionType(releaseVersionType);
+        releaseDateVersionMetaData.setReleaseVersionType(releaseVersionType);
     }
 
     /**
      * 获取版本生效日期
      */
     public LocalDate getVersionDate() {
-        return releaseDateVersionData.getVersionDate();
+        return releaseDateVersionMetaData.getVersionDate();
     }
 
     /**
      * 设置版本生效日期
      */
     public void setVersionDate(LocalDate versionDate) {
-        releaseDateVersionData.setVersionDate(versionDate);
+        releaseDateVersionMetaData.setVersionDate(versionDate);
     }
 
     /**
      * 获取版本过期日期
      */
     public LocalDate getExpirationDate() {
-        return releaseDateVersionData.getExpirationDate();
+        return releaseDateVersionMetaData.getExpirationDate();
     }
 
     /**
      * 设置版本过期日期
      */
     public void setExpirationDate(LocalDate expirationDate) {
-        releaseDateVersionData.setExpirationDate(expirationDate);
+        releaseDateVersionMetaData.setExpirationDate(expirationDate);
     }
 
     /**
      * 获取数据状态
      */
     public Short getDataStatus() {
-        return releaseDateVersionData.getDataStatus();
+        return releaseDateVersionMetaData.getDataStatus();
     }
 
     /**
      * 设置数据状态
      */
     public void setDataStatus(Short dataStatus) {
-        releaseDateVersionData.setDataStatus(dataStatus);
+        releaseDateVersionMetaData.setDataStatus(dataStatus);
     }
 
     /**
      * 检查数据是否已删除
      */
     public boolean isDeleted() {
-        return releaseDateVersionData.isDeleted();
+        return releaseDateVersionMetaData.isDeleted();
     }
 
     /**
      * 设置删除状态
      */
     public void setDeleted(boolean deleted) {
-        releaseDateVersionData.setDeleted(deleted);
+        releaseDateVersionMetaData.setDeleted(deleted);
     }
 
 }

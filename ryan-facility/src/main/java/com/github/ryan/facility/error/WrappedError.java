@@ -17,8 +17,8 @@ public class WrappedError {
 
     private final Object[] args;
 
-    public WrappedError(ErrorTypeInterface errorType, Exception exception,Object[] args) {
-        this.args = args;
+    public WrappedError(ErrorTypeInterface errorType, Exception exception, Object[] args) {
+        this.args = args != null ? args : new Object[0];
         this.errorType = errorType;
         this.exception = exception;
     }
@@ -32,7 +32,7 @@ public class WrappedError {
     }
 
 
-    public static WrappedError of(ErrorTypeInterface errorType, Exception exception,Object[] args) {
+    public static WrappedError of(ErrorTypeInterface errorType, Exception exception, Object[] args) {
         return new WrappedError(errorType, exception, args);
     }
 

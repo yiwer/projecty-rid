@@ -96,6 +96,8 @@ public class SpringContextHolder implements ApplicationContextAware {
      */
     @Override
     public void setApplicationContext(@Nullable ApplicationContext applicationContext) throws BeansException {
-        SpringContextHolder.applicationContext = applicationContext;
+        if (applicationContext != null) {
+            SpringContextHolder.applicationContext = applicationContext;
+        }
     }
 }

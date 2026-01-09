@@ -1,7 +1,7 @@
 package com.github.ryan.version.release_date.version;
 
 import com.github.ryan.version.core.BusinessData;
-import com.github.ryan.version.release_date.ReleaseDateVersionData;
+import com.github.ryan.version.release_date.ReleaseDateVersionMetaData;
 import com.github.ryan.version.release_date.lazy_load.LazyLoadableReleaseDateVersion;
 import lombok.Getter;
 
@@ -49,7 +49,7 @@ public class AloneReleaseDateVersion<D extends BusinessData<D>>
      * @param versionData  版本元数据
      * @param businessData 业务数据
      */
-    public AloneReleaseDateVersion(ReleaseDateVersionData versionData, D businessData) {
+    public AloneReleaseDateVersion(ReleaseDateVersionMetaData versionData, D businessData) {
         super(versionData);
         this.businessData = businessData;
     }

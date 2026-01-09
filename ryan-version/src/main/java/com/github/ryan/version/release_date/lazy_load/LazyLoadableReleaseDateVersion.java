@@ -3,7 +3,7 @@ package com.github.ryan.version.release_date.lazy_load;
 import com.github.ryan.version.core.BusinessData;
 import com.github.ryan.version.core.LazyLoadableVersion;
 import com.github.ryan.version.core.VersionLazyLoader;
-import com.github.ryan.version.release_date.ReleaseDateVersionData;
+import com.github.ryan.version.release_date.ReleaseDateVersionMetaData;
 import com.github.ryan.version.release_date.ReleaseVersionType;
 import com.github.ryan.version.release_date.version.AbstractReleaseDateVersion;
 import jakarta.annotation.Nonnull;
@@ -74,20 +74,20 @@ public class LazyLoadableReleaseDateVersion<D extends BusinessData<D>>
     /**
      * 构造函数（未加载数据）
      *
-     * @param releaseDateVersionData 版本元数据
+     * @param releaseDateVersionMetaData 版本元数据
      */
-    protected LazyLoadableReleaseDateVersion(@Nonnull ReleaseDateVersionData releaseDateVersionData) {
-        super(releaseDateVersionData);
+    protected LazyLoadableReleaseDateVersion(@Nonnull ReleaseDateVersionMetaData releaseDateVersionMetaData) {
+        super(releaseDateVersionMetaData);
     }
 
     /**
      * 构造函数（已加载数据）
      *
-     * @param releaseDateVersionData 版本元数据
-     * @param businessData           业务数据
+     * @param releaseDateVersionMetaData 版本元数据
+     * @param businessData               业务数据
      */
-    protected LazyLoadableReleaseDateVersion(@Nonnull ReleaseDateVersionData releaseDateVersionData, @Nonnull D businessData) {
-        super(releaseDateVersionData);
+    protected LazyLoadableReleaseDateVersion(@Nonnull ReleaseDateVersionMetaData releaseDateVersionMetaData, @Nonnull D businessData) {
+        super(releaseDateVersionMetaData);
         this.businessData = businessData;
         this.loaded = true;
     }
@@ -132,7 +132,7 @@ public class LazyLoadableReleaseDateVersion<D extends BusinessData<D>>
      */
     @Override
     public LazyLoadableReleaseDateVersion<D> splitNextVersion(LocalDate modifyDate) {
-        final ReleaseDateVersionData nextVersionData = ReleaseDateVersionData.builder()
+        final ReleaseDateVersionMetaData nextVersionData = ReleaseDateVersionMetaData.builder()
                 .dataId(super.getDataId())
                 .dataType(super.getDataType())
                 .releaseVersionType(ReleaseVersionType.MODIFY)

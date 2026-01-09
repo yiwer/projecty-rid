@@ -58,16 +58,25 @@ public final class IdUtil {
      * @return ID生成器实例
      */
     private static SnowIdGenerator getIdGenerator() {
-        // 如果已缓存且不是默认生成器，直接返回
-        if (cachedGenerator != null && cachedGenerator != DEFAULT_SNOW_ID_GENERATOR) {
-            return cachedGenerator;
+        // 本地变量避免多次读取volatile字段
+        SnowIdGenerator cached = cachedGenerator;
+        if (cached != null && cached != DEFAULT_SNOW_ID_GENERATOR) {
+            return cached;
         }
 
-        // 尝试从Spring容器获取
-        SnowIdGenerator springBean = SpringContextHolder.getBean(SnowIdGenerator.class).orElse(null);
-        if (springBean != null) {
-            cachedGenerator = springBean;
-            return springBean;
+        // 双重检查锁定模式
+        synchronized (IdUtil.class) {
+            cached = cachedGenerator;
+            if (cached != null && cached != DEFAULT_SNOW_ID_GENERATOR) {
+                return cached;
+            }
+
+            // 尝试从Spring容器获取
+            SnowIdGenerator springBean = SpringContextHolder.getBean(SnowIdGenerator.class).orElse(null);
+            if (springBean != null) {
+                cachedGenerator = springBean;
+                return springBean;
+            }
         }
 
         // 如果Spring容器未就绪，使用默认生成器（不缓存，下次调用再尝试获取）

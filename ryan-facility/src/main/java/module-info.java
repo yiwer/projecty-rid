@@ -1,11 +1,28 @@
 module ryan.facility {
+    exports com.github.ryan.facility;
+    exports com.github.ryan.facility.common;
+    exports com.github.ryan.facility.context;
+    exports com.github.ryan.facility.copy;
     exports com.github.ryan.facility.date;
     exports com.github.ryan.facility.error;
+    exports com.github.ryan.facility.file;
+    exports com.github.ryan.facility.http.client;
+    exports com.github.ryan.facility.id;
+    exports com.github.ryan.facility.json;
+    exports com.github.ryan.facility.locale;
     exports com.github.ryan.facility.log;
+    exports com.github.ryan.facility.number;
+    exports com.github.ryan.facility.pattern;
     exports com.github.ryan.facility.result;
-    exports com.github.ryan.facility;
-    exports com.github.ryan.facility.copy;
-    exports com.github.ryan.facility.common;
+    exports com.github.ryan.facility.structure;
+
+    opens com.github.ryan.facility to spring.core, spring.beans, spring.context;
+    opens com.github.ryan.facility.context to spring.core, spring.beans, spring.context;
+    opens com.github.ryan.facility.id to spring.core, spring.beans, spring.context;
+    opens com.github.ryan.facility.log to spring.core, spring.beans, spring.context;
+    opens com.github.ryan.facility.id.support to spring.core, spring.beans, spring.context;
+    opens com.github.ryan.facility.json.support to spring.core, spring.beans, spring.context;
+
     requires ch.qos.logback.classic;
     requires cn.hutool.core;
     requires com.fasterxml.jackson.annotation;

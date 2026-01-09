@@ -199,7 +199,11 @@ public final class LogUtil {
         if (handler == null) {
             SpringContextHolder.getBean(LogPostHandlerComposite.class).ifOk(h -> {
                 HANDLER_CACHE.compareAndSet(null, h);
-                doInvokePostHandler(h, message, level, callerClassName, throwable);
+                // CAS后重新读取，确保使用实际缓存的处理器
+                LogPostHandlerComposite cached = HANDLER_CACHE.get();
+                if (cached != null) {
+                    doInvokePostHandler(cached, message, level, callerClassName, throwable);
+                }
             });
         } else {
             doInvokePostHandler(handler, message, level, callerClassName, throwable);

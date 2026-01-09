@@ -5,7 +5,6 @@ import com.github.ryan.facility.error.WrappedError;
 import com.github.ryan.facility.result.Result;
 import com.github.ryan.facility.structure.Tuple;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.Null;
 import org.apache.commons.lang3.time.DateUtils;
 
 import java.time.*;
@@ -157,6 +156,9 @@ public final class DateUtil {
      * @apiNote 格式化日期时间工具方法
      */
     public static Result<String, WrappedError> format(TemporalAccessor temporal, String pattern) {
+        if (temporal == null || pattern == null) {
+            return Result.err(WrappedError.of(FacilityErrorType.FORMAT_TEMPORAL_ERROR));
+        }
         try {
             DateTimeFormatter dateTimeFormatter = FORMATTER_MAP.computeIfAbsent(pattern, DateTimeFormatter::ofPattern);
             return Result.ok(dateTimeFormatter.format(temporal));
@@ -196,6 +198,9 @@ public final class DateUtil {
      * @apiNote 从字符串解析LocalDateTime的工具方法
      */
     public static Result<LocalDateTime, WrappedError> parseDateTime(String localDateTimeStr, String pattern) {
+        if (localDateTimeStr == null || pattern == null) {
+            return Result.err(WrappedError.of(FacilityErrorType.PARSE_STR_TO_TEMPORAL_ERROR));
+        }
         try {
             DateTimeFormatter dateTimeFormatter = FORMATTER_MAP.computeIfAbsent(pattern, DateTimeFormatter::ofPattern);
             return Result.ok(LocalDateTime.parse(localDateTimeStr, dateTimeFormatter));
@@ -213,6 +218,9 @@ public final class DateUtil {
      * @apiNote 从字符串解析LocalDate的工具方法
      */
     public static Result<LocalDate, WrappedError> parseDate(String localDateStr, String pattern) {
+        if (localDateStr == null || pattern == null) {
+            return Result.err(WrappedError.of(FacilityErrorType.PARSE_STR_TO_TEMPORAL_ERROR));
+        }
         try {
             DateTimeFormatter dateTimeFormatter = FORMATTER_MAP.computeIfAbsent(pattern, DateTimeFormatter::ofPattern);
             return Result.ok(LocalDate.parse(localDateStr, dateTimeFormatter));
@@ -280,7 +288,7 @@ public final class DateUtil {
      *
      * @apiNote 判断日期1不早于日期2，任一参数为null返回false
      */
-    public static boolean noBefore(@Null LocalDate localDate1, @Nullable LocalDate localDate2) {
+    public static boolean noBefore(@Nullable LocalDate localDate1, @Nullable LocalDate localDate2) {
         if (Objects.isNull(localDate1) || Objects.isNull(localDate2)) {
             return false;
         }

@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 /**
- * <b>日期版本数据实体</b>
+ * <b>日期版本元数据实体</b>
  * <p>
  * 存储版本的元数据信息，包括数据标识、版本日期、过期日期等。
  * 该类不包含实际的业务数据，仅作为版本的标识和状态信息。
@@ -23,7 +23,7 @@ import java.util.Objects;
  *
  * <h3>使用示例：</h3>
  * <pre>{@code
- * ReleaseDateVersionData versionData = ReleaseDateVersionData.builder()
+ * ReleaseDateVersionMetaData versionData = ReleaseDateVersionMetaData.builder()
  *     .dataId(1L)
  *     .dataType(DataType.STOP.getCode())
  *     .releaseVersionType(ReleaseVersionType.CREATE)
@@ -40,7 +40,7 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReleaseDateVersionData {
+public class ReleaseDateVersionMetaData {
 
     /**
      * 数据唯一标识
@@ -88,7 +88,7 @@ public class ReleaseDateVersionData {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof final ReleaseDateVersionData that)) {
+        if (!(o instanceof final ReleaseDateVersionMetaData that)) {
             return false;
         }
         return Objects.equals(getDataId(), that.getDataId())

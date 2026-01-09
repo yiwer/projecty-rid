@@ -454,7 +454,10 @@ public final class FileUtil {
 
     /**
      * <b>MultipartFile 转 Java IO File</b>
-     * <p>会产生临时文件，使用完建议删除。</p>
+     * <p>会产生临时文件，使用完建议删除。JVM退出时会自动清理。</p>
+     *
+     * @param multipartFile 上传的文件
+     * @return 临时文件，调用者应在使用完毕后手动删除
      */
     public static Result<File, WrappedError> toTempFile(MultipartFile multipartFile) {
         if (multipartFile == null || multipartFile.isEmpty()) {
@@ -470,6 +473,7 @@ public final class FileUtil {
                     StringUtils.hasText(prefix) ? prefix : "temp",
                     StringUtils.hasText(suffix) ? suffix : ".tmp"
             );
+            tempFile.deleteOnExit();  // JVM退出时自动删除
             multipartFile.transferTo(tempFile);
             return Result.ok(tempFile);
         } catch (IOException e) {
@@ -1003,10 +1007,15 @@ public final class FileUtil {
         if (directory == null || !directory.toFile().exists()) {
             return Collections.emptyList();
         }
-        if (directory.toFile().isFile() && predicate.test(directory.toFile())) {
-            return Collections.singletonList(directory.toFile());
+        File dirFile = directory.toFile();
+        if (dirFile.isFile() && predicate.test(dirFile)) {
+            return Collections.singletonList(dirFile);
         }
-        return List.of(Objects.requireNonNull(directory.toFile().listFiles((dir, name) -> dir.isFile() && predicate.test(dir))));
+        if (!dirFile.isDirectory()) {
+            return Collections.emptyList();
+        }
+        File[] files = dirFile.listFiles(file -> file.isFile() && predicate.test(file));
+        return files != null ? Arrays.asList(files) : Collections.emptyList();
     }
 
     /**
@@ -1300,6 +1309,7 @@ public final class FileUtil {
         try {
             // OFDReader 需要文件路径，先写入临时文件
             tempFile = Files.createTempFile("ofd_extract_", ".ofd");
+            tempFile.toFile().deleteOnExit();  // JVM退出时删除
             Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
             try (OFDReader reader = new OFDReader(tempFile)) {
@@ -1318,8 +1328,8 @@ public final class FileUtil {
             if (tempFile != null) {
                 try {
                     Files.deleteIfExists(tempFile);
-                } catch (IOException ignored) {
-                    // 忽略删除失败
+                } catch (IOException e) {
+                    LogUtil.warn("删除OFD临时文件失败: {}", tempFile);
                 }
             }
         }

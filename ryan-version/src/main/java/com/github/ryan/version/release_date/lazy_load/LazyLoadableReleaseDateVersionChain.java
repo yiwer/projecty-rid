@@ -3,7 +3,7 @@ package com.github.ryan.version.release_date.lazy_load;
 import com.github.ryan.facility.common.CommonUtil;
 import com.github.ryan.version.core.BusinessData;
 import com.github.ryan.version.core.VersionLazyLoader;
-import com.github.ryan.version.release_date.ReleaseDateVersionData;
+import com.github.ryan.version.release_date.ReleaseDateVersionMetaData;
 import com.github.ryan.version.release_date.chain.AbstractReleaseDateVersionChain;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public abstract class LazyLoadableReleaseDateVersionChain<D extends BusinessData
      * @param dataType       数据类型
      * @param aggregatedData 业务数据
      */
-    protected LazyLoadableReleaseDateVersionChain(ReleaseDateVersionData identity, D businessData) {
+    protected LazyLoadableReleaseDateVersionChain(ReleaseDateVersionMetaData identity, D businessData) {
         super(identity.getDataId(), identity.getDataType(), List.of(new LazyLoadableReleaseDateVersion<D>(identity, businessData)));
     }
 
@@ -62,7 +62,7 @@ public abstract class LazyLoadableReleaseDateVersionChain<D extends BusinessData
      *
      * @param lazyLoadedDataMap 版本身份标识到业务数据的映射
      */
-    public void loadAggregatedDataToChain(Map<ReleaseDateVersionData, D> lazyLoadedDataMap) {
+    public void loadAggregatedDataToChain(Map<ReleaseDateVersionMetaData, D> lazyLoadedDataMap) {
         if (CommonUtil.isNotEmpty(lazyLoadedDataMap)) {
             lazyLoadedDataMap.forEach((lazyIdentity, businessData) -> {
                 this.findVersionByVersionDateEq(lazyIdentity.getVersionDate()).ifPresent(version ->

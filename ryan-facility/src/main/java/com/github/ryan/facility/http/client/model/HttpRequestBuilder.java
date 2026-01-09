@@ -318,13 +318,18 @@ public final class HttpRequestBuilder {
      *
      * @param path 文件路径
      * @return this
+     * @throws IllegalArgumentException path 为 null 时抛出
+     * @throws IllegalStateException 创建文件 BodyPublisher 失败时抛出
      */
     public HttpRequestBuilder file(Path path) {
+        if (path == null) {
+            throw new IllegalArgumentException("path cannot be null");
+        }
         try {
             this.bodyPublisher = HttpRequest.BodyPublishers.ofFile(path);
             this.contentType = APPLICATION_OCTET_STREAM;
         } catch (Exception e) {
-            this.bodyPublisher = HttpRequest.BodyPublishers.noBody();
+            throw new IllegalStateException("Failed to create file body publisher for path: " + path, e);
         }
         return this;
     }
