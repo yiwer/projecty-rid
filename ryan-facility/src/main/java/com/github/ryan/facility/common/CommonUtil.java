@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 @UtilityClass
 public class CommonUtil {
 
-    // ================== Null Checks ==================
+    // ==================== Null Checks ====================
 
     /**
      * 判断对象是否为 null
@@ -85,7 +85,7 @@ public class CommonUtil {
         return Objects.equals(a, b);
     }
 
-    // ================== Empty Checks ==================
+    // ==================== Empty Checks ====================
 
     /**
      * 判断集合是否为空
@@ -190,7 +190,7 @@ public class CommonUtil {
         return !isBlank(cs);
     }
 
-    // ================== Map Operations ==================
+    // ==================== Map Operations ====================
 
     /**
      * 集合转 Map（putIfAbsent 模式，保留先插入的值）
@@ -311,7 +311,7 @@ public class CommonUtil {
     }
 
 
-    // ================== List Operations ==================
+    // ==================== List Operations ====================
 
     /**
      * 安全地聚合多个列表
@@ -460,7 +460,7 @@ public class CommonUtil {
         return resultList;
     }
 
-    // ================== Default Value Helpers ==================
+    // ==================== Default Value Helpers ====================
 
     /**
      * 如果数据为 null 则返回默认值
@@ -512,7 +512,7 @@ public class CommonUtil {
         }
     }
 
-    // ================== Business Logic ==================
+    // ==================== Business Logic ====================
 
     /**
      * 业务等价比较

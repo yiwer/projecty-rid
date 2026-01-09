@@ -5,8 +5,8 @@ import lombok.Getter;
 /**
  * <b> WrappedError </b>
  *
- * @author : yvvb
- * @since : 12/16/2025
+ * @author yvvb
+ * @since 2025/12/16
  */
 @Getter
 public class WrappedError {

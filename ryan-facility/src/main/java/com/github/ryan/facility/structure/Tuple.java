@@ -41,7 +41,7 @@ import java.util.function.Function;
  * @param <L>   左值类型
  * @param <R>   右值类型
  * @author yvvb
- * @since 2025/5/04
+ * @since 2025/5/4
  */
 public record Tuple<L, R>(L left, R right) implements Serializable {
 

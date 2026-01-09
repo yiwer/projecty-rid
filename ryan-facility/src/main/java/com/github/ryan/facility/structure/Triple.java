@@ -43,7 +43,7 @@ import java.util.function.Function;
  * @param <M>    中值类型
  * @param <R>    右值类型
  * @author yvvb
- * @since 2025/5/04
+ * @since 2025/5/4
  * @see Tuple
  */
 public record Triple<L, M, R>(L left, M middle, R right) implements Serializable {
