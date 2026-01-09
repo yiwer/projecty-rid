@@ -198,8 +198,10 @@ public final class FileUtil {
 
     /**
      * <b>检测输入流的 MIME 类型</b>
+     * <p><b>注意：</b>此方法会消费输入流的部分或全部内容，调用后流不可复用。</p>
+     * <p>如需复用流，请先将其缓存为字节数组或使用支持 mark/reset 的流。</p>
      *
-     * @param inputStream 输入流（必须支持 mark/reset）
+     * @param inputStream 输入流（会被消费）
      *
      * @return MIME 类型字符串
      */
@@ -1020,9 +1022,11 @@ public final class FileUtil {
 
     /**
      * <b>压缩文件列表为 ZIP</b>
+     * <p>单个文件处理失败时会跳过并记录日志，不影响其他文件的压缩。</p>
      *
      * @param files      要压缩的文件列表
      * @param outputPath 输出 ZIP 文件路径
+     * @return 成功返回输出路径，失败返回错误
      */
     public static Result<Path, WrappedError> zipFiles(List<Path> files, Path outputPath) {
         if (files == null || files.isEmpty()) {
@@ -1039,10 +1043,15 @@ public final class FileUtil {
                     new BufferedOutputStream(new FileOutputStream(outputPath.toFile())))) {
                 for (Path file : files) {
                     if (Files.exists(file) && Files.isRegularFile(file)) {
-                        ZipEntry entry = new ZipEntry(file.getFileName().toString());
-                        zos.putNextEntry(entry);
-                        Files.copy(file, zos);
-                        zos.closeEntry();
+                        try {
+                            ZipEntry entry = new ZipEntry(file.getFileName().toString());
+                            zos.putNextEntry(entry);
+                            Files.copy(file, zos);
+                            zos.closeEntry();
+                        } catch (IOException e) {
+                            // 单个文件处理失败，记录日志并继续处理其他文件
+                            LogUtil.warn("压缩文件失败，跳过: {}, 错误: {}", file, e.getMessage());
+                        }
                     }
                 }
             }
@@ -1266,7 +1275,7 @@ public final class FileUtil {
      *
      * @deprecated 使用 {@link #extractTextFromStream(InputStream)} 替代
      */
-    @Deprecated
+    @Deprecated(since = "1.0", forRemoval = true)
     public static Result<String, WrappedError> extractTextFromWord(InputStream inputStream) {
         return extractTextFromStream(inputStream);
     }
@@ -1281,7 +1290,7 @@ public final class FileUtil {
      *
      * @deprecated 使用 {@link #extractTextFromStream(InputStream)} 替代
      */
-    @Deprecated
+    @Deprecated(since = "1.0", forRemoval = true)
     public static Result<String, WrappedError> extractTextFromExcel(InputStream inputStream) {
         return extractTextFromStream(inputStream);
     }

@@ -23,6 +23,12 @@ import java.util.Base64;
  * }
  * }</pre>
  *
+ * <p><b>注意：</b></p>
+ * <ul>
+ *     <li>序列化过程中会完全消费输入流，调用后流不可复用</li>
+ *     <li>大文件可能导致内存压力，建议对流大小进行限制</li>
+ * </ul>
+ *
  * @author yvvb
  * @since 2025/5/4
  * @see InputStreamDeserializer

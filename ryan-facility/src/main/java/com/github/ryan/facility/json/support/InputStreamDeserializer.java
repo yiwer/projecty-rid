@@ -24,6 +24,8 @@ import java.util.Base64;
  * }
  * }</pre>
  *
+ * <p><b>注意：</b>如果输入的Base64字符串无效，将抛出{@link IOException}。</p>
+ *
  * @author yvvb
  * @since 2025/5/4
  * @see InputStreamSerializer
@@ -36,14 +38,21 @@ public class InputStreamDeserializer extends JsonDeserializer<InputStream> {
      * @param p    JSON解析器
      * @param ctxt 反序列化上下文
      * @return 解码后的InputStream
-     * @throws IOException IO异常
+     * @throws IOException 当Base64字符串无效时抛出
      */
     @Override
     public InputStream deserialize(JsonParser p, DeserializationContext ctx)
             throws IOException {
-        // 从 Base64 字符串重建 InputStream
+        // 从Base64字符串重建InputStream
         String base64 = p.getText();
-        byte[] bytes = Base64.getDecoder().decode(base64);
-        return new ByteArrayInputStream(bytes);
+        if (base64 == null || base64.isEmpty()) {
+            return new ByteArrayInputStream(new byte[0]);
+        }
+        try {
+            byte[] bytes = Base64.getDecoder().decode(base64);
+            return new ByteArrayInputStream(bytes);
+        } catch (IllegalArgumentException e) {
+            throw new IOException("无效的Base64编码字符串", e);
+        }
     }
 }
